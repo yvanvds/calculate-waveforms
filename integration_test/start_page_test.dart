@@ -33,6 +33,13 @@ void main() {
           .toList(),
     };
     expect(find.text('W1 = sin(2π × 220.5 × t)'), findsOneWidget);
+    await tester.ensureVisible(find.byKey(const Key('play-W1')));
+    await tester.tap(find.byKey(const Key('play-W1')));
+    await tester.pumpAndSettle();
+    expect(find.text('W1 speelt · 2 seconden'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('play-W1')));
+    await tester.pumpAndSettle();
+    expect(find.text('W1 speelt · 2 seconden'), findsNothing);
     await tester.enterText(find.byKey(const Key('frequency-W1')), '0');
     await tester.pumpAndSettle();
     expect(
@@ -62,6 +69,27 @@ void main() {
           .toList(),
     };
     expect(find.text('W2 = sin(2π × 880 × t)'), findsOneWidget);
+    await tester.ensureVisible(find.byKey(const Key('play-W2')));
+    await tester.tap(find.byKey(const Key('play-W2')));
+    await tester.pumpAndSettle();
+    binding.reportData = {'stap': 'W2 afspelen'};
+    expect(find.text('W2 speelt · 2 seconden'), findsOneWidget);
+    await tester.ensureVisible(find.byKey(const Key('play-W1')));
+    await tester.tap(find.byKey(const Key('play-W1')));
+    await tester.pumpAndSettle();
+    binding.reportData = {'stap': 'W1 neemt over'};
+    expect(find.text('W1 speelt · 2 seconden'), findsOneWidget);
+    expect(find.text('W2 speelt · 2 seconden'), findsNothing);
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 2300)),
+    );
+    await tester.pumpAndSettle();
+    binding.reportData = {
+      'stap': 'Automatisch einde',
+      'status': tester.widget<Text>(find.byKey(const Key('status-W1'))).data,
+    };
+    expect(find.text('W1 speelt · 2 seconden'), findsNothing);
+    expect(find.text('Afspelen lukt niet. Probeer opnieuw.'), findsNothing);
     expect(find.text('W1 = sin(2π × 220.5 × t)'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });

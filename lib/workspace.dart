@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import 'main.dart' show DesignTokens;
 import 'waveform.dart';
+import 'audio.dart';
 
 class Workspace extends StatefulWidget {
   const Workspace({super.key, required this.tokens});
@@ -14,12 +15,54 @@ class Workspace extends StatefulWidget {
 
 class _WorkspaceState extends State<Workspace> {
   final workspace = WaveformWorkspace();
+  AudioOutput? audio;
+  String? playing;
+  String? audioError;
+
+  Future<void> play(Waveform wave) async {
+    setState(() {
+      playing = wave.id;
+      audioError = null;
+    });
+    try {
+      await playWave(audio ??= createAudioOutput(), wave, () {
+        if (mounted) setState(() => playing = null);
+      });
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          playing = null;
+          audioError = 'Afspelen lukt niet. Probeer opnieuw.';
+        });
+      }
+    }
+  }
+
+  void stop() {
+    audio?.stop();
+    setState(() => playing = null);
+  }
+
+  @override
+  void dispose() {
+    audio?.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
       for (final wave in workspace.waves)
-        WaveCard(key: ValueKey(wave.id), wave: wave, tokens: widget.tokens),
+        WaveCard(
+          key: ValueKey(wave.id),
+          wave: wave,
+          tokens: widget.tokens,
+          playing: playing == wave.id,
+          onPlay: () => play(wave),
+          onStop: stop,
+        ),
+      if (audioError != null) Text(audioError!),
       const SizedBox(height: 16),
       FilledButton.icon(
         key: const Key('add-wave'),
@@ -36,8 +79,17 @@ class _WorkspaceState extends State<Workspace> {
 }
 
 class WaveCard extends StatefulWidget {
-  const WaveCard({super.key, required this.wave, required this.tokens});
+  const WaveCard({
+    super.key,
+    required this.wave,
+    required this.tokens,
+    required this.playing,
+    required this.onPlay,
+    required this.onStop,
+  });
   final Waveform wave;
+  final bool playing;
+  final VoidCallback onPlay, onStop;
   final DesignTokens tokens;
   @override
   State<WaveCard> createState() => _WaveCardState();
@@ -66,6 +118,25 @@ class _WaveCardState extends State<WaveCard> {
               fontWeight: FontWeight.w700,
               color: tokens.color('forest'),
             ),
+          ),
+          const SizedBox(height: 16),
+          Wrap(
+            spacing: 16,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              FilledButton.icon(
+                key: Key('play-${wave.id}'),
+                onPressed: widget.playing ? widget.onStop : widget.onPlay,
+                icon: Icon(widget.playing ? Icons.stop : Icons.play_arrow),
+                label: Text(widget.playing ? 'Stoppen' : 'Afspelen'),
+              ),
+              Text(
+                widget.playing
+                    ? '${wave.id} speelt · 2 seconden'
+                    : 'Klaar om te luisteren · 2 seconden',
+                key: Key('status-${wave.id}'),
+              ),
+            ],
           ),
           const SizedBox(height: 16),
           TextFormField(

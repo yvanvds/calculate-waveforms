@@ -27,11 +27,19 @@ Leerlingen van het zesde middelbaar.
 Eerst een website die leerlingen via een link openen, zonder installatie of account. Flutter houdt de mogelijkheid open om later ook een installeerbare app te maken.
 
 ## Frameworks en bouwstenen
-Flutter met Dart, gekozen voor de interactieve bediening, golfvisualisaties en de mogelijkheid om later meerdere platformen te ondersteunen. Berekeningen, visualisatie en geluid gebruiken dezelfde golfgegevens, zodat het zichtbare en hoorbare resultaat overeenkomen. De concrete audiobouwsteen wordt bij de uitvoering gekozen.
+Flutter met Dart, gekozen voor de interactieve bediening, golfvisualisaties en de mogelijkheid om later meerdere platformen te ondersteunen. Berekeningen, visualisatie en geluid gebruiken dezelfde golfgegevens, zodat het zichtbare en hoorbare resultaat overeenkomen. Audio gebruikt de Web Audio API via `package:web`.
 
 ## Golfgegevens
 
 Sinusgolven gebruiken 48.000 samples per seconde, amplitude 1 en 96.000 samples per golf: precies twee seconden. De sampletijd is `index / 48000`; het eindpunt op twee seconden wordt niet dubbel opgeslagen. Grafieken lezen deze gegevens rechtstreeks. Latere audio en bewerkingen gebruiken dezelfde tijdsbasis. Het invoerbereik is 1 tot en met 20.000 Hz, onder de Nyquistgrens van 24.000 Hz. Nieuwe golven starten op 440 Hz. Naast het volledige overzicht toont een detailgrafiek de eerste drie oscillaties (maximaal twee seconden). Per beeldpunt bewaart het overzicht de kleinste en grootste samplewaarde om snelle oscillaties niet weg te laten vallen.
+
+## Audio
+
+Flutter web gebruikt `package:web` met de ingebouwde Web Audio API (`AudioBufferSourceNode`). Die speelt een buffer met onze eigen samples af en stopt aan het einde; er wordt geen aparte oscillator gebruikt. Zie de [Web Audio-documentatie](https://developer.mozilla.org/en-US/docs/Web/API/AudioBufferSourceNode). De buffer bevat 96.000 samples op 48.000 Hz en duurt dus twee seconden. Alleen een druk op Afspelen maakt of hervat de audiocontext. Stoppen en een andere golf starten onderbreken de vorige bron. De status volgt het einde van de browserbron.
+
+Iedere afspeelactie kopieert de actuele grafiekgegevens naar een mono Float32-buffer. Alleen in die kopie geldt een vaste versterking van 0,2 en harde begrenzing op −0,9 en +0,9. Er is geen normalisatie per golf; amplitudeverschillen blijven hoorbaar tot de begrenzing. De berekende golf en grafiek blijven ongewijzigd. Dit garandeert geen veilig toestelvolume: dat hangt ook van de luidsprekers, hoofdtelefoon en volumestand af.
+
+De geautomatiseerde Chromium-proef gebruikt `--web-browser-flag=--autoplay-policy=no-user-gesture-required`: een Flutter-testtap telt voor Chromium niet als vertrouwde gebruikersklik. Dit is uitsluitend een testinstelling; de app start audio alleen vanuit de afspeelknop. De proef controleert de echte browserroute en het natuurlijke einde, maar beluistert het geluid niet.
 
 ## Opslag
 De eerste versie bewaart niets blijvend. Na opnieuw laden begint de gebruiker opnieuw. De app verwerkt geen namen, punten of andere leerlinggegevens. Geheimen en echte leerlinggegevens horen niet in code, voorbeelden of de publieke repository.
