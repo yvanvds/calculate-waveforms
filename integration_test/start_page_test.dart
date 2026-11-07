@@ -1,4 +1,5 @@
 import 'package:calculate_waveforms/main.dart' as app;
+import 'package:calculate_waveforms/workspace.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/material.dart';
 import 'package:integration_test/integration_test.dart';
@@ -33,6 +34,58 @@ void main() {
           .toList(),
     };
     expect(find.text('W1 = sin(2π × 220.5 × t)'), findsOneWidget);
+    await tester.ensureVisible(find.byKey(const Key('add-wave')));
+    await tester.tap(find.byKey(const Key('add-wave')));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byKey(const Key('multiply-wave')));
+    await tester.tap(find.byKey(const Key('multiply-wave')));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byKey(const Key('factor-W3')));
+    await tester.enterText(find.byKey(const Key('factor-W3')), '-0,5');
+    await tester.pumpAndSettle();
+    expect(find.text('W3 = W1 × -0,5'), findsOneWidget);
+    await tester.enterText(find.byKey(const Key('factor-W3')), 'NaN');
+    await tester.pumpAndSettle();
+    expect(
+      find.text('Vul een eindig getal in, met een komma of punt.'),
+      findsOneWidget,
+    );
+    await tester.enterText(find.byKey(const Key('factor-W3')), '-1.0');
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byKey(const Key('sum-wave')));
+    await tester.tap(find.byKey(const Key('sum-wave')));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byKey(const Key('source-b-W4')));
+    await tester.tap(find.byKey(const Key('source-b-W4')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('W3').last);
+    await tester.pumpAndSettle();
+    expect(find.text('W4 = W1 + W3'), findsOneWidget);
+    await tester.ensureVisible(find.byKey(const Key('frequency-W1')));
+    await tester.enterText(find.byKey(const Key('frequency-W1')), '1000');
+    await tester.pumpAndSettle();
+    final graphs = tester.widgetList<WaveGraph>(find.byType(WaveGraph));
+    expect(
+      graphs.firstWhere((g) => g.wave.id == 'W3').wave.samples[12],
+      closeTo(-1, 1e-12),
+    );
+    expect(
+      graphs
+          .firstWhere((g) => g.wave.id == 'W4')
+          .wave
+          .samples
+          .every((s) => s == 0),
+      isTrue,
+    );
+    await tester.ensureVisible(find.byKey(const Key('play-W4')));
+    await tester.tap(find.byKey(const Key('play-W4')));
+    await tester.pumpAndSettle();
+    expect(find.text('W4 speelt · 2 seconden'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('play-W4')));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byKey(const Key('frequency-W1')));
+    await tester.enterText(find.byKey(const Key('frequency-W1')), '220,5');
+    await tester.pumpAndSettle();
     await tester.ensureVisible(find.byKey(const Key('play-W1')));
     await tester.tap(find.byKey(const Key('play-W1')));
     await tester.pumpAndSettle();
@@ -51,7 +104,7 @@ void main() {
       200,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.tap(find.byKey(const Key('add-wave')));
+    // W2 was added before the operations above.
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(
       find.byKey(const Key('frequency-W2')),

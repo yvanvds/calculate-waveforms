@@ -4,6 +4,47 @@ import 'package:calculate_waveforms/waveform.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  test('Grote eindige factoren behouden hun formulewaarde', () {
+    final workspace = WaveformWorkspace();
+    final wave = workspace.addOperation();
+    workspace.updateOperation(wave, workspace.waves.first, null, 1e100);
+    expect(wave.formula, 'W2 = W1 × 1e+100');
+    expect(wave.samples.every((value) => value.isFinite), isTrue);
+  });
+  test('Bewerkingen bewaren amplitudes, bronnen en doorwerking', () {
+    final workspace = WaveformWorkspace();
+    final a = workspace.waves.first;
+    final scaled = workspace.addOperation();
+    for (final factor in [0.0, -1.0, 2.5]) {
+      workspace.updateOperation(scaled, a, null, factor);
+      for (final i in [0, 12, 57, 95999]) {
+        expect(scaled.samples[i], a.samples[i] * factor);
+      }
+    }
+    final sum = workspace.addOperation(sum: true);
+    workspace.updateOperation(sum, a, a, null);
+    expect(sum.samples[12], a.samples[12] * 2);
+    workspace.updateOperation(scaled, a, null, -1);
+    workspace.updateOperation(sum, a, scaled, null);
+    expect(sum.samples.every((v) => v == 0), isTrue);
+    workspace.updateOperation(sum, scaled, scaled, null);
+    workspace.updateFrequency(a, 1000);
+    expect(sum.samples[12], closeTo(-2, 1e-12));
+    expect(sum.samples.length, 96000);
+    expect(workspace.waves.map((w) => w.id).toSet().length, 3);
+    expect(
+      () => workspace.updateOperation(scaled, sum, null, 1),
+      throwsArgumentError,
+    );
+    for (final invalid in [double.nan, double.infinity, 1e308]) {
+      expect(
+        () => workspace.updateOperation(scaled, a, null, invalid),
+        throwsArgumentError,
+      );
+    }
+    expect(scaled.factor, -1);
+    expect(sum.samples[12], closeTo(-2, 1e-12));
+  });
   test('Sinuswaarden en tijdsbasis zijn exact twee seconden', () {
     final wave = Waveform(id: 'W1', frequency: 1000);
     expect(wave.samples.length / sampleRate, 2);

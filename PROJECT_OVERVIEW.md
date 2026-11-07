@@ -33,6 +33,10 @@ Flutter met Dart, gekozen voor de interactieve bediening, golfvisualisaties en d
 
 Sinusgolven gebruiken 48.000 samples per seconde, amplitude 1 en 96.000 samples per golf: precies twee seconden. De sampletijd is `index / 48000`; het eindpunt op twee seconden wordt niet dubbel opgeslagen. Grafieken lezen deze gegevens rechtstreeks. Latere audio en bewerkingen gebruiken dezelfde tijdsbasis. Het invoerbereik is 1 tot en met 20.000 Hz, onder de Nyquistgrens van 24.000 Hz. Nieuwe golven starten op 440 Hz. Naast het volledige overzicht toont een detailgrafiek de eerste drie oscillaties (maximaal twee seconden). Per beeldpunt bewaart het overzicht de kleinste en grootste samplewaarde om snelle oscillaties niet weg te laten vallen.
 
+## Bewerkingen
+
+Vermenigvuldigen en optellen bewaren verwijzingen naar hun bronnen. Iedere wijziging herberekent de afgeleide golven in aanmaakvolgorde met dezelfde 96.000 tijdstippen. Bronkeuzes tonen eerdere golven; zo kan een resultaat opnieuw als bron dienen zonder kringverwijzingen. Factoren aanvaarden komma's en punten, nul en negatieve waarden. Ongeldige of te grote resultaten geven feedback en behouden de laatste geldige berekening. Alle grafieken delen een amplitudeschaal die minstens −1 tot +1 beslaat en uitbreidt tot de grootste amplitude in de werkruimte. Daardoor blijven verschillen tussen golven zichtbaar, ook boven amplitude 1.
+
 ## Audio
 
 Flutter web gebruikt `package:web` met de ingebouwde Web Audio API (`AudioBufferSourceNode`). Die speelt een buffer met onze eigen samples af en stopt aan het einde; er wordt geen aparte oscillator gebruikt. Zie de [Web Audio-documentatie](https://developer.mozilla.org/en-US/docs/Web/API/AudioBufferSourceNode). De buffer bevat 96.000 samples op 48.000 Hz en duurt dus twee seconden. Alleen een druk op Afspelen maakt of hervat de audiocontext. Stoppen en een andere golf starten onderbreken de vorige bron. De status volgt het einde van de browserbron.

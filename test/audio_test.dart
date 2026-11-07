@@ -24,6 +24,22 @@ class RecordingOutput implements AudioOutput {
 }
 
 void main() {
+  test('Afgeleide audio gebruikt de actuele keten zonder rekenamplitudes te beperken', () async {
+    final workspace = WaveformWorkspace();
+    final source = workspace.waves.first;
+    final scaled = workspace.addOperation();
+    workspace.updateOperation(scaled, source, null, 2);
+    final sum = workspace.addOperation(sum: true);
+    workspace.updateOperation(sum, scaled, source, null);
+    final output = RecordingOutput();
+    await playWave(output, sum, () {});
+    final before = output.samples[12];
+    workspace.updateFrequency(source, 1000);
+    await playWave(output, sum, () {});
+    expect(sum.samples[12], closeTo(3, 1e-12));
+    expect(output.samples[12], closeTo(0.6, 1e-7));
+    expect(output.samples[12], isNot(before));
+  });
   test(
     'Audio copies current graph data at fixed gain and exact duration',
     () async {

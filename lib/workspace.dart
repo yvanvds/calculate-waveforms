@@ -58,6 +58,13 @@ class _WorkspaceState extends State<Workspace> {
           key: ValueKey(wave.id),
           wave: wave,
           tokens: widget.tokens,
+          workspace: workspace,
+          onChanged: () => setState(() {}),
+          amplitude: workspace.waves.fold<double>(
+            1,
+            (peak, w) =>
+                w.samples.fold<double>(peak, (p, s) => math.max(p, s.abs())),
+          ),
           playing: playing == wave.id,
           onPlay: () => play(wave),
           onStop: stop,
@@ -74,6 +81,22 @@ class _WorkspaceState extends State<Workspace> {
         icon: const Icon(Icons.add),
         label: const Text('Nieuwe waveform toevoegen'),
       ),
+      const SizedBox(height: 12),
+      OutlinedButton(
+        key: const Key('multiply-wave'),
+        onPressed: () => setState(() {
+          workspace.addOperation();
+        }),
+        child: const Text('Vermenigvuldigen met een getal'),
+      ),
+      const SizedBox(height: 12),
+      OutlinedButton(
+        key: const Key('sum-wave'),
+        onPressed: () => setState(() {
+          workspace.addOperation(sum: true);
+        }),
+        child: const Text('Twee waveforms optellen'),
+      ),
     ],
   );
 }
@@ -86,8 +109,14 @@ class WaveCard extends StatefulWidget {
     required this.playing,
     required this.onPlay,
     required this.onStop,
+    required this.workspace,
+    required this.onChanged,
+    required this.amplitude,
   });
   final Waveform wave;
+  final WaveformWorkspace workspace;
+  final VoidCallback onChanged;
+  final double amplitude;
   final bool playing;
   final VoidCallback onPlay, onStop;
   final DesignTokens tokens;
@@ -112,7 +141,7 @@ class _WaveCardState extends State<WaveCard> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '${wave.id} · Sinusgolf',
+            '${wave.id} · ${wave.isSine ? 'Sinusgolf' : 'Berekende golf'}',
             style: TextStyle(
               fontSize: 21,
               fontWeight: FontWeight.w700,
@@ -139,42 +168,80 @@ class _WaveCardState extends State<WaveCard> {
             ],
           ),
           const SizedBox(height: 16),
-          TextFormField(
-            key: Key('frequency-${wave.id}'),
-            initialValue: '${wave.frequency.toInt()}',
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            decoration: InputDecoration(
-              labelText: 'Frequentie ${wave.id} (Hz)',
-              helperText: '1 tot 20.000 Hz · amplitude 1',
-              errorText: error,
-              border: const OutlineInputBorder(),
+          if (wave.isSine)
+            TextFormField(
+              key: Key('frequency-${wave.id}'),
+              initialValue: '${wave.frequency.toInt()}',
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              decoration: InputDecoration(
+                labelText: 'Frequentie ${wave.id} (Hz)',
+                helperText: '1 tot 20.000 Hz · amplitude 1',
+                errorText: error,
+                border: const OutlineInputBorder(),
+              ),
+              onChanged: (text) {
+                final value = double.tryParse(text.replaceAll(',', '.'));
+                setState(() {
+                  if (value == null ||
+                      !value.isFinite ||
+                      value < minFrequency ||
+                      value > maxFrequency) {
+                    error = 'Kies een getal van 1 tot en met 20.000 Hz.';
+                  } else {
+                    error = null;
+                    try {
+                      widget.workspace.updateFrequency(wave, value);
+                      widget.onChanged();
+                    } on ArgumentError catch (e) {
+                      error = e.message.toString();
+                    }
+                  }
+                });
+              },
             ),
-            onChanged: (text) {
-              final value = double.tryParse(text.replaceAll(',', '.'));
-              setState(() {
-                if (value == null ||
-                    !value.isFinite ||
-                    value < minFrequency ||
-                    value > maxFrequency) {
-                  error = 'Kies een getal van 1 tot en met 20.000 Hz.';
-                } else {
-                  error = null;
-                  wave.updateFrequency(value);
-                }
-              });
-            },
-          ),
+          if (!wave.isSine) ...[
+            sourceChoice(wave.sourceA!, false),
+            const SizedBox(height: 12),
+            if (wave.sourceB != null)
+              sourceChoice(wave.sourceB!, true)
+            else
+              TextFormField(
+                key: Key('factor-${wave.id}'),
+                initialValue: number(wave.factor!).replaceAll('.', ','),
+                decoration: InputDecoration(
+                  labelText: 'Vermenigvuldigen met',
+                  helperText: 'Komma of punt · ook nul en negatieve getallen',
+                  errorText: error,
+                  border: const OutlineInputBorder(),
+                ),
+                onChanged: (text) {
+                  final value = double.tryParse(text.replaceAll(',', '.'));
+                  changeOperation(wave.sourceA!, null, value);
+                },
+              ),
+            if (wave.sourceB != null && error != null) Text(error!),
+            const Text(
+              'Bronkeuze: eerdere golven, zodat geen kringverwijzing ontstaat.',
+            ),
+          ],
           const SizedBox(height: 16),
-          Text(
-            '${wave.id} = sin(2π × ${wave.frequency == wave.frequency.roundToDouble() ? wave.frequency.toInt().toString() : wave.frequency.toString()} × t)',
-            key: Key('formula-${wave.id}'),
-          ),
+          Text(wave.formula, key: Key('formula-${wave.id}')),
           const SizedBox(height: 16),
           Text(
             'Volledige golf · 0–2 s',
             style: TextStyle(color: tokens.color('ink-muted')),
           ),
-          WaveGraph(wave: wave, tokens: tokens, endTime: 2),
+          Text(
+            'Gedeelde amplitudeschaal: −${number(widget.amplitude)} tot +${number(widget.amplitude)}',
+          ),
+          WaveGraph(
+            wave: wave,
+            tokens: tokens,
+            endTime: 2,
+            amplitude: widget.amplitude,
+          ),
           const SizedBox(height: 16),
           Text(
             'Detail · maximaal drie oscillaties (${(1000 * math.min(2, 3 / wave.frequency)).toStringAsFixed(2)} ms)',
@@ -184,11 +251,46 @@ class _WaveCardState extends State<WaveCard> {
             wave: wave,
             tokens: tokens,
             endTime: math.min(2, 3 / wave.frequency),
+            amplitude: widget.amplitude,
           ),
         ],
       ),
     );
   }
+
+  void changeOperation(Waveform a, Waveform? b, double? factor) {
+    setState(() {
+      try {
+        widget.workspace.updateOperation(widget.wave, a, b, factor);
+        error = null;
+        widget.onChanged();
+      } on ArgumentError catch (e) {
+        error = e.message.toString();
+      }
+    });
+  }
+
+  Widget sourceChoice(Waveform selected, bool second) =>
+      DropdownButtonFormField<String>(
+        key: Key('source-${second ? 'b' : 'a'}-${widget.wave.id}'),
+        initialValue: selected.id,
+        decoration: InputDecoration(
+          labelText: second ? 'Tweede bron' : 'Bron',
+          border: const OutlineInputBorder(),
+        ),
+        items: widget.workspace
+            .sourcesFor(widget.wave)
+            .map((w) => DropdownMenuItem(value: w.id, child: Text(w.id)))
+            .toList(),
+        onChanged: (id) {
+          final source = widget.workspace.waves.firstWhere((w) => w.id == id);
+          changeOperation(
+            second ? widget.wave.sourceA! : source,
+            second ? source : widget.wave.sourceB,
+            widget.wave.factor,
+          );
+        },
+      );
 }
 
 class WaveGraph extends StatelessWidget {
@@ -197,14 +299,16 @@ class WaveGraph extends StatelessWidget {
     required this.wave,
     required this.tokens,
     required this.endTime,
+    this.amplitude = 1,
   });
   final Waveform wave;
   final DesignTokens tokens;
   final double endTime;
+  final double amplitude;
   @override
   Widget build(BuildContext context) => Semantics(
     label:
-        'Grafiek ${wave.id}, ${wave.frequency} Hz, tijd 0 tot $endTime seconden, amplitude min 1 tot plus 1',
+        'Grafiek ${wave.id}, tijd 0 tot $endTime seconden, amplitude min $amplitude tot plus $amplitude',
     child: SizedBox(
       height: 170,
       width: double.infinity,
@@ -212,6 +316,7 @@ class WaveGraph extends StatelessWidget {
         painter: WavePainter(
           samples: wave.samples,
           endTime: endTime,
+          amplitude: amplitude,
           line: tokens.color('line-strong'),
           ink: tokens.color('ink-muted'),
           waveColor: tokens.color('brand-text'),
@@ -228,9 +333,11 @@ class WavePainter extends CustomPainter {
     required this.line,
     required this.ink,
     required this.waveColor,
+    this.amplitude = 1,
   });
   final List<double> samples;
   final double endTime;
+  final double amplitude;
   final Color line, ink, waveColor;
   @override
   void paint(Canvas canvas, Size size) {
@@ -255,8 +362,8 @@ class WavePainter extends CustomPainter {
       painter.paint(canvas, position);
     }
 
-    label('+1', Offset(4, area.top));
-    label('−1', Offset(4, area.bottom - 12));
+    label('+${number(amplitude)}', Offset(4, area.top));
+    label('−${number(amplitude)}', Offset(4, area.bottom - 12));
     label('0', Offset(area.left, area.bottom + 5));
     label(
       '${endTime.toStringAsPrecision(3)} s',
@@ -287,7 +394,7 @@ class WavePainter extends CustomPainter {
       final dx = area.left + x * area.width / pixels;
       final y =
           area.center.dy -
-          samples[math.min(start, count - 1)] * area.height / 2;
+          samples[math.min(start, count - 1)] / amplitude * area.height / 2;
       if (x == 0) {
         path.moveTo(dx, y);
       } else {
@@ -295,8 +402,8 @@ class WavePainter extends CustomPainter {
       }
       if (stop - start > 1) {
         canvas.drawLine(
-          Offset(dx, area.center.dy - low * area.height / 2),
-          Offset(dx, area.center.dy - high * area.height / 2),
+          Offset(dx, area.center.dy - low / amplitude * area.height / 2),
+          Offset(dx, area.center.dy - high / amplitude * area.height / 2),
           paint,
         );
       }
@@ -306,5 +413,7 @@ class WavePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(WavePainter oldDelegate) =>
-      oldDelegate.samples != samples || oldDelegate.endTime != endTime;
+      oldDelegate.samples != samples ||
+      oldDelegate.endTime != endTime ||
+      oldDelegate.amplitude != amplitude;
 }
