@@ -5,6 +5,9 @@ import 'package:flutter/material.dart';
 import 'main.dart' show DesignTokens;
 import 'waveform.dart';
 import 'audio.dart';
+import 'envelope.dart';
+
+part 'envelope_card.dart';
 
 class Workspace extends StatefulWidget {
   const Workspace({super.key, required this.tokens});
@@ -53,6 +56,13 @@ class _WorkspaceState extends State<Workspace> {
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
+      for (final envelope in workspace.envelopes)
+        EnvelopeCard(
+          key: ValueKey(envelope.id),
+          envelope: envelope,
+          tokens: widget.tokens,
+          onChanged: () => setState(workspace.recalculate),
+        ),
       for (final wave in workspace.waves)
         WaveCard(
           key: ValueKey(wave.id),
@@ -71,6 +81,18 @@ class _WorkspaceState extends State<Workspace> {
         ),
       if (audioError != null) Text(audioError!),
       const SizedBox(height: 16),
+      OutlinedButton(
+        key: const Key('add-envelope'),
+        onPressed: () => setState(workspace.addEnvelope),
+        child: const Text('Envelope toevoegen'),
+      ),
+      OutlinedButton(
+        key: const Key('apply-envelope'),
+        onPressed: workspace.envelopes.isEmpty
+            ? null
+            : () => setState(workspace.applyEnvelope),
+        child: const Text('Envelope toepassen op een golf'),
+      ),
       FilledButton.icon(
         key: const Key('add-wave'),
         style: FilledButton.styleFrom(
@@ -204,7 +226,28 @@ class _WaveCardState extends State<WaveCard> {
           if (!wave.isSine) ...[
             sourceChoice(wave.sourceA!, false),
             const SizedBox(height: 12),
-            if (wave.sourceB != null)
+            if (wave.envelope != null)
+              DropdownButtonFormField<String>(
+                key: Key('envelope-${wave.id}'),
+                initialValue: wave.envelope!.id,
+                decoration: const InputDecoration(
+                  labelText: 'Envelope',
+                  border: OutlineInputBorder(),
+                ),
+                items: widget.workspace.envelopes
+                    .map(
+                      (e) => DropdownMenuItem(value: e.id, child: Text(e.id)),
+                    )
+                    .toList(),
+                onChanged: (id) {
+                  wave.envelope = widget.workspace.envelopes.firstWhere(
+                    (e) => e.id == id,
+                  );
+                  widget.workspace.recalculate();
+                  widget.onChanged();
+                },
+              )
+            else if (wave.sourceB != null)
               sourceChoice(wave.sourceB!, true)
             else
               TextFormField(
@@ -334,8 +377,10 @@ class WavePainter extends CustomPainter {
     required this.ink,
     required this.waveColor,
     this.amplitude = 1,
+    this.unipolar = false,
   });
   final List<double> samples;
+  final bool unipolar;
   final double endTime;
   final double amplitude;
   final Color line, ink, waveColor;
@@ -347,8 +392,8 @@ class WavePainter extends CustomPainter {
       ..strokeWidth = 1;
     canvas.drawLine(area.topLeft, area.bottomLeft, axis);
     canvas.drawLine(
-      Offset(area.left, area.center.dy),
-      Offset(area.right, area.center.dy),
+      Offset(area.left, unipolar ? area.bottom : area.center.dy),
+      Offset(area.right, unipolar ? area.bottom : area.center.dy),
       axis,
     );
     void label(String text, Offset position) {
@@ -363,7 +408,10 @@ class WavePainter extends CustomPainter {
     }
 
     label('+${number(amplitude)}', Offset(4, area.top));
-    label('−${number(amplitude)}', Offset(4, area.bottom - 12));
+    label(
+      unipolar ? '0' : '−${number(amplitude)}',
+      Offset(4, area.bottom - 12),
+    );
     label('0', Offset(area.left, area.bottom + 5));
     label(
       '${endTime.toStringAsPrecision(3)} s',
@@ -375,7 +423,12 @@ class WavePainter extends CustomPainter {
       ..color = waveColor
       ..strokeWidth = 1.3
       ..style = PaintingStyle.stroke;
-    final count = math.min(samples.length, (endTime * sampleRate).ceil());
+    double ordinate(double value) => unipolar
+        ? area.bottom - value * area.height
+        : area.center.dy - value / amplitude * area.height / 2;
+    final count = unipolar
+        ? samples.length
+        : math.min(samples.length, (endTime * sampleRate).ceil());
     final path = Path();
     // A min/max envelope per pixel preserves high-frequency peaks in the overview.
     final pixels = math.max(1, area.width.ceil());
@@ -392,9 +445,7 @@ class WavePainter extends CustomPainter {
         high = math.max(high, samples[i]);
       }
       final dx = area.left + x * area.width / pixels;
-      final y =
-          area.center.dy -
-          samples[math.min(start, count - 1)] / amplitude * area.height / 2;
+      final y = ordinate(samples[math.min(start, count - 1)]);
       if (x == 0) {
         path.moveTo(dx, y);
       } else {
@@ -402,8 +453,8 @@ class WavePainter extends CustomPainter {
       }
       if (stop - start > 1) {
         canvas.drawLine(
-          Offset(dx, area.center.dy - low / amplitude * area.height / 2),
-          Offset(dx, area.center.dy - high / amplitude * area.height / 2),
+          Offset(dx, ordinate(low)),
+          Offset(dx, ordinate(high)),
           paint,
         );
       }
@@ -415,5 +466,6 @@ class WavePainter extends CustomPainter {
   bool shouldRepaint(WavePainter oldDelegate) =>
       oldDelegate.samples != samples ||
       oldDelegate.endTime != endTime ||
+      oldDelegate.unipolar != unipolar ||
       oldDelegate.amplitude != amplitude;
 }

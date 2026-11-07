@@ -1,6 +1,8 @@
 import 'dart:math' as math;
 import 'dart:typed_data';
 
+import 'envelope.dart';
+
 /// Shared timebase for graphs, future audio and derived waveforms.
 /// Samples cover [0, 2): 96,000 samples / 48,000 Hz = exactly two seconds.
 const sampleRate = 48000;
@@ -18,9 +20,12 @@ class Waveform {
   late Float64List samples;
   Waveform? sourceA, sourceB;
   double? factor;
+  Envelope? envelope;
   bool get isSine => sourceA == null;
   String get formula => isSine
       ? '$id = sin(2π × ${number(frequency)} × t)'
+      : envelope != null
+      ? '$id = ${sourceA!.id} × ${envelope!.id}'
       : sourceB == null
       ? '$id = ${sourceA!.id} × ${number(factor!).replaceAll('.', ',')}'
       : '$id = ${sourceA!.id} + ${sourceB!.id}';
@@ -31,7 +36,9 @@ class Waveform {
     samples = Float64List.fromList(
       List.generate(
         sampleRate * durationSeconds,
-        (i) => sourceB == null
+        (i) => envelope != null
+            ? sourceA!.samples[i] * envelope!.valueAt(i / sampleRate)
+            : sourceB == null
             ? sourceA!.samples[i] * factor!
             : sourceA!.samples[i] + sourceB!.samples[i],
       ),
@@ -63,6 +70,21 @@ String number(double value) =>
 class WaveformWorkspace {
   final List<Waveform> waves = [];
   int _nextId = 1;
+  final List<Envelope> envelopes = [];
+  Envelope addEnvelope() {
+    final envelope = Envelope(id: 'E${envelopes.length + 1}');
+    envelopes.add(envelope);
+    return envelope;
+  }
+
+  Waveform applyEnvelope() {
+    final wave = Waveform(id: 'W${_nextId++}');
+    wave.sourceA = waves.first;
+    wave.envelope = envelopes.first;
+    wave.recalculate();
+    waves.add(wave);
+    return wave;
+  }
 
   WaveformWorkspace() {
     addSine();
@@ -94,7 +116,9 @@ class WaveformWorkspace {
         'Kies een eerdere golf om kringverwijzingen te voorkomen.',
       );
     }
-    if (b == null && (factor == null || !factor.isFinite)) {
+    if (wave.envelope == null &&
+        b == null &&
+        (factor == null || !factor.isFinite)) {
       throw ArgumentError('Vul een eindig getal in, met een komma of punt.');
     }
     final oldA = wave.sourceA, oldB = wave.sourceB;

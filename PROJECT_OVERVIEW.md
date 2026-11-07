@@ -37,6 +37,10 @@ Sinusgolven gebruiken 48.000 samples per seconde, amplitude 1 en 96.000 samples 
 
 Vermenigvuldigen en optellen bewaren verwijzingen naar hun bronnen. Iedere wijziging herberekent de afgeleide golven in aanmaakvolgorde met dezelfde 96.000 tijdstippen. Bronkeuzes tonen eerdere golven; zo kan een resultaat opnieuw als bron dienen zonder kringverwijzingen. Factoren aanvaarden komma's en punten, nul en negatieve waarden. Ongeldige of te grote resultaten geven feedback en behouden de laatste geldige berekening. Alle grafieken delen een amplitudeschaal die minstens −1 tot +1 beslaat en uitbreidt tot de grootste amplitude in de werkruimte. Daardoor blijven verschillen tussen golven zichtbaar, ook boven amplitude 1.
 
+## Envelopes
+
+Envelopes krijgen eigen ID's E1, E2 enzovoort. Lineair aanzwellen gaat van 0 naar 1, uitdoven van 1 naar 0 over twee seconden. ADSR begint met 0,2 s aanzet, 0,3 s terugval, niveau 0,7 en 0,5 s loslaten: daardoor blijft 1 s aanhouden over. Dit geeft een herkenbare aanzet met ruimte om alle fasen te onderzoeken. Nulduurfasen springen meteen naar de volgende fase. De grafiek toont ook het eindpunt; audiosamples blijven de gedeelde tijdsbasis [0, 2) gebruiken. Toepassen bewaart verwijzingen naar golf en envelope; wijzigingen werken door naar volgende bewerkingen.
+
 ## Audio
 
 Flutter web gebruikt `package:web` met de ingebouwde Web Audio API (`AudioBufferSourceNode`). Die speelt een buffer met onze eigen samples af en stopt aan het einde; er wordt geen aparte oscillator gebruikt. Zie de [Web Audio-documentatie](https://developer.mozilla.org/en-US/docs/Web/API/AudioBufferSourceNode). De buffer bevat 96.000 samples op 48.000 Hz en duurt dus twee seconden. Alleen een druk op Afspelen maakt of hervat de audiocontext. Stoppen en een andere golf starten onderbreken de vorige bron. De status volgt het einde van de browserbron.
