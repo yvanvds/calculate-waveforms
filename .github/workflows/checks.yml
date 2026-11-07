@@ -27,7 +27,8 @@ jobs:
       - run: flutter test
       - uses: nanasess/setup-chromedriver@v2
       - run: chromedriver --port=4444 &
-      - run: flutter drive --driver=test_driver/integration_test.dart --target=integration_test/start_page_test.dart -d web-server --headless --release --no-web-resources-cdn --timeout=120
+      # Flutter test taps do not provide a trusted browser user activation.
+      - run: flutter drive --driver=test_driver/integration_test.dart --target=integration_test/start_page_test.dart -d web-server --headless --release --web-browser-flag=--autoplay-policy=no-user-gesture-required --no-web-resources-cdn --timeout=120
       - run: flutter build web --base-href /calculate-waveforms/ --no-web-resources-cdn
       - uses: actions/configure-pages@v5
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
