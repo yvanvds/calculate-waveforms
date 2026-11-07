@@ -32,4 +32,27 @@ De projectinstellingen staan in `.codex/config.toml`; uitleg en beperkingen in `
 
 ## Projectspecifieke aanvullingen
 
-Na `$setup`: vul hier de gekozen bouwstenen en geverifieerde commando's om te ontwikkelen, testen en bouwen aan. Bedenk geen commando's voordat het framework is gekozen en aangemaakt.
+### Doel en eerste versie
+
+- Bouw een interactieve fysica-app voor leerlingen van het zesde middelbaar, volgens `PROJECT_OVERVIEW.md`.
+- Begin met sinusgolven met instelbare frequentie. Elke golf duurt precies twee seconden en is zichtbaar en beluisterbaar.
+- Geef elke golf en envelope een uniek, herkenbaar ID. Toevoegen, vermenigvuldigen met een kommagetal, optellen en een envelope toepassen leveren nieuwe golven op; behoud de bronnen en toon de gebruikte formule.
+- Ondersteun aanzwellen, uitdoven en ADSR als envelopes. Wijzigingen aan bronnen of instellingen werken meteen door naar alle afgeleide golven.
+- Bewaar in de eerste versie niets blijvend. Downloads, accounts, andere brongolfvormen en installeerbare apps vallen buiten de eerste versie.
+
+### Bouwstenen en vormgeving
+
+- Gebruik Flutter met Dart en richt de eerste versie op de browser.
+- Gebruik dezelfde berekende golfgegevens voor grafieken en audio. Houd berekeningen los van de bediening, zodat de wiskunde afzonderlijk te testen is.
+- Kies de concrete audiobouwsteen tijdens het bijbehorende issue. Beperk het uitgangsniveau bij het afspelen zonder de rekenresultaten te veranderen.
+- Neem stijlwaarden over uit `design-system/tokens.json` en gebruik de componentvoorbeelden als visuele leidraad voor Flutter. Lees ook `design-system/README.md`.
+- Publiceer de webapp op GitHub Pages; richt via een issue automatische publicatie na een merge naar de hoofdbranch in.
+
+### Ontwikkelen, testen en bouwen
+
+- Er is nog geen Flutter-app aangemaakt. Daarom zijn er nog geen projectcommando's voor ontwikkelen, testen of bouwen geverifieerd. Maak in deze voorbereidingsstap geen applicatiecode aan.
+- Het eerste basisissue maakt de Flutter-projectstructuur aan en vult deze sectie aan met de werkelijk uitgevoerde commando's voor starten, codecontrole, testen en een webbuild. Controleer ook het juiste basispad voor GitHub Pages.
+- Git, GitHub CLI en Flutter zijn bij de setup gecontroleerd. `flutter doctor` kon Chrome toen niet vinden; controleer vóór de browserproeven welke geschikte browser beschikbaar is en los een ontbrekende browser op.
+- Test de frequentie en duur van sinusgolven, correcte sommen en vermenigvuldigingen, het verloop en toepassen van envelopes, unieke ID's en het doorwerken van wijzigingen door meerdere bewerkingen.
+- Controleer dat grafieken en audio dezelfde golfgegevens gebruiken en dat de geluidsweergave precies twee seconden duurt.
+- Controleer toevoegen, wijzigen, combineren en afspelen ook in de echte webapp. Rapporteer afzonderlijk welke automatische en browsercontroles daadwerkelijk zijn uitgevoerd.
