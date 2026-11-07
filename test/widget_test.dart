@@ -18,8 +18,9 @@ void main() {
       findsOneWidget,
     );
     await tester.scrollUntilVisible(
-      find.text('Het experiment is in opbouw.'),
+      find.text('W1 · Sinusgolf'),
       200,
+      scrollable: find.byType(Scrollable).first,
     );
     expect(find.byKey(const Key('experiment')), findsOneWidget);
     expect(tester.takeException(), isNull);

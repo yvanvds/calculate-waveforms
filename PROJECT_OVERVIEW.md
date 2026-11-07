@@ -29,6 +29,10 @@ Eerst een website die leerlingen via een link openen, zonder installatie of acco
 ## Frameworks en bouwstenen
 Flutter met Dart, gekozen voor de interactieve bediening, golfvisualisaties en de mogelijkheid om later meerdere platformen te ondersteunen. Berekeningen, visualisatie en geluid gebruiken dezelfde golfgegevens, zodat het zichtbare en hoorbare resultaat overeenkomen. De concrete audiobouwsteen wordt bij de uitvoering gekozen.
 
+## Golfgegevens
+
+Sinusgolven gebruiken 48.000 samples per seconde, amplitude 1 en 96.000 samples per golf: precies twee seconden. De sampletijd is `index / 48000`; het eindpunt op twee seconden wordt niet dubbel opgeslagen. Grafieken lezen deze gegevens rechtstreeks. Latere audio en bewerkingen gebruiken dezelfde tijdsbasis. Het invoerbereik is 1 tot en met 20.000 Hz, onder de Nyquistgrens van 24.000 Hz. Nieuwe golven starten op 440 Hz. Naast het volledige overzicht toont een detailgrafiek de eerste drie oscillaties (maximaal twee seconden). Per beeldpunt bewaart het overzicht de kleinste en grootste samplewaarde om snelle oscillaties niet weg te laten vallen.
+
 ## Opslag
 De eerste versie bewaart niets blijvend. Na opnieuw laden begint de gebruiker opnieuw. De app verwerkt geen namen, punten of andere leerlinggegevens. Geheimen en echte leerlinggegevens horen niet in code, voorbeelden of de publieke repository.
 

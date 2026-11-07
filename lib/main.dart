@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
+import 'workspace.dart';
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   runApp(WaveformsApp(tokens: await DesignTokens.load()));
@@ -129,49 +131,10 @@ class StartPage extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 16),
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 48,
-                            horizontal: 24,
-                          ),
-                          decoration: BoxDecoration(
-                            color: tokens.color('surface-sunken'),
-                            borderRadius: BorderRadius.circular(
-                              tokens.size('radius', 'radius-md'),
-                            ),
-                          ),
-                          child: Column(
-                            children: [
-                              Icon(
-                                Icons.waves_rounded,
-                                size: 48,
-                                color: tokens.color('forest'),
-                              ),
-                              const SizedBox(height: 16),
-                              Text(
-                                'Hier krijgen je golven straks vorm.',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 21,
-                                  fontWeight: FontWeight.w700,
-                                  color: tokens.color('forest'),
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                'Het experiment is in opbouw.',
-                                style: TextStyle(
-                                  fontSize: 17,
-                                  color: tokens.color('ink-muted'),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+                        Workspace(tokens: tokens),
                         const SizedBox(height: 24),
                         Text(
-                          'Binnenkort: sinusgolven van twee seconden, bewerkingen en envelopes.',
+                          'Elke golf duurt twee seconden. Verander de frequentie en bekijk wat er gebeurt.',
                           style: TextStyle(
                             fontSize: 15,
                             height: 22 / 15,
