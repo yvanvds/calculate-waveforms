@@ -1,0 +1,25 @@
+name: Controles
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  flutter:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.47.9'
+          cache: true
+      - run: flutter pub get
+      - run: dart format --output=none --set-exit-if-changed lib test integration_test test_driver
+      - run: flutter analyze
+      - run: flutter test
+      - uses: nanasess/setup-chromedriver@v2
+      - run: chromedriver --port=4444 &
+      - run: flutter drive --driver=test_driver/integration_test.dart --target=integration_test/start_page_test.dart -d web-server --headless --release --no-web-resources-cdn --timeout=120
+      - run: flutter build web --base-href /calculate-waveforms/ --no-web-resources-cdn

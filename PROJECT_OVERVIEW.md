@@ -48,4 +48,4 @@ Gebruikt het design system in `design-system/`. Flutter neemt kleuren, lettertyp
 Publicatie als Flutter-webapp op GitHub Pages. Elke merge naar de hoofdbranch publiceert de site automatisch via een nog in te richten workflow.
 
 ## Beschikbare tools
-Git, GitHub CLI en Flutter zijn aanwezig. GitHub is aangemeld en de repository gebruikt het anonieme GitHub-mailadres voor commits. `flutter doctor` vindt Chrome nog niet; voor de browsercontroles moet een geschikte browser beschikbaar worden gemaakt. Er is nog geen applicatiecode aangemaakt en er zijn nog geen build- of testcommando's voor dit project geverifieerd.
+Git, GitHub CLI en Flutter zijn aanwezig. GitHub is aangemeld en de repository gebruikt het anonieme GitHub-mailadres voor commits. De Flutter-webbasis bestaat; de gecontroleerde ontwikkel-, test- en buildcommando's staan in AGENTS.md. Figtree wordt samen met de app geleverd, zodat het lettertype geen externe verbinding nodig heeft.

@@ -50,8 +50,12 @@ De projectinstellingen staan in `.codex/config.toml`; uitleg en beperkingen in `
 
 ### Ontwikkelen, testen en bouwen
 
-- Er is nog geen Flutter-app aangemaakt. Daarom zijn er nog geen projectcommando's voor ontwikkelen, testen of bouwen geverifieerd. Maak in deze voorbereidingsstap geen applicatiecode aan.
-- Het eerste basisissue maakt de Flutter-projectstructuur aan en vult deze sectie aan met de werkelijk uitgevoerde commando's voor starten, codecontrole, testen en een webbuild. Controleer ook het juiste basispad voor GitHub Pages.
+- De Flutter-webbasis gebruikt Flutter 3.47.9 en Dart 3.13.7. Installeer afhankelijkheden met `flutter pub get`.
+- Starten: `flutter run -d web-server --web-port=8080 --no-web-resources-cdn`, daarna openen op `http://localhost:8080`. Het starten van deze server is gecontroleerd.
+- Opmaak: `dart format lib test integration_test test_driver`. Codecontrole: `flutter analyze`. Werking: `flutter test`.
+- Webbuild: `flutter build web --base-href /calculate-waveforms/ --no-web-resources-cdn`. Het basispad voor deze projectsite op GitHub Pages is `/calculate-waveforms/`.
+- De browserproef staat in `integration_test/start_page_test.dart`, met de driver in `test_driver/integration_test.dart`. Gebruik een passende ChromeDriver en Chromium voor deze test.
+- Browserproef: start `chromedriver --port=4445 --disable-build-check` voor de lokaal beschikbare ChromeDriver 156 met Chromium 158. Voer daarna uit: `flutter drive --driver=test_driver/integration_test.dart --target=integration_test/start_page_test.dart -d web-server --headless --driver-port=4445 --chrome-binary=/home/phi/.cache/ms-playwright/chromium-1254/chrome-linux64/chrome --no-web-resources-cdn --release --timeout=60`. Dit voerde de startpagina echt in Chromium uit en slaagde. Op CI gebruikt de workflow bij elkaar passende Chrome en ChromeDriver, op standaardpoort 4444.
 - Git, GitHub CLI en Flutter zijn bij de setup gecontroleerd. `flutter doctor` kon Chrome toen niet vinden; controleer vóór de browserproeven welke geschikte browser beschikbaar is en los een ontbrekende browser op.
 - Test de frequentie en duur van sinusgolven, correcte sommen en vermenigvuldigingen, het verloop en toepassen van envelopes, unieke ID's en het doorwerken van wijzigingen door meerdere bewerkingen.
 - Controleer dat grafieken en audio dezelfde golfgegevens gebruiken en dat de geluidsweergave precies twee seconden duurt.
