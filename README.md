@@ -1,4 +1,22 @@
-# Mijn eerste echte project
+# Rekenen met waveforms
+
+Een interactieve fysica-app voor leerlingen van het zesde middelbaar. De eerste startpagina staat klaar; golven berekenen en beluisteren volgen in volgende issues.
+
+**Website:** [Rekenen met waveforms](https://yvanvds.github.io/calculate-waveforms/).
+
+## Ontwikkelen en publiceren
+
+Gebruik Flutter 3.47.9 (Dart 3.13.7). Installeer met `flutter pub get` en start met `flutter run -d web-server --web-port=8080 --no-web-resources-cdn`. Open daarna [de lokale app](http://localhost:8080).
+
+De workflow [Controles en publicatie](.github/workflows/checks.yml) controleert opmaak, code en tests, voert de startpagina in Chrome uit en bouwt de webapp. Bij iedere push naar `main` publiceert ze daarna de gecontroleerde build op GitHub Pages. Een pull request voert dezelfde controles uit, zonder publicatie. Pages gebruikt GitHub Actions als bron.
+
+Het buildcommando is `flutter build web --base-href /calculate-waveforms/ --no-web-resources-cdn`. Het basispad is nodig voor deze projectsite. Figtree en de webrenderer worden samen met de app geleverd. Publicatie vergt geen eigen geheimen.
+
+Na de eerste merge: controleer de geslaagde workflow, open het publieke adres in een echte browser, controleer de startpagina en het lettertype, vernieuw de pagina en voer `curl -sI https://yvanvds.github.io/calculate-waveforms/` uit. De publieke proef kan pas na die eerste publicatie gebeuren. De lokale controles en het browserrecept staan in [AGENTS.md](AGENTS.md).
+
+---
+
+# Oorspronkelijke templatehandleiding
 
 Dit is een startpunt voor een eigen app of website die je met AI bouwt. Je hebt geen programmeerervaring nodig. De AI schrijft de code; deze template zorgt ervoor dat je project een solide basis krijgt en dat je er later zelfstandig mee verder kan.
 

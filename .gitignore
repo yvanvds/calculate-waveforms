@@ -25,5 +25,6 @@ Thumbs.db
 desktop.ini
 .vscode/
 .idea/
+*.iml
 .~lock*
 ~$*
