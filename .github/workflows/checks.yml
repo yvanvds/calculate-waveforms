@@ -1,13 +1,19 @@
-name: Controles
+name: Controles en publicatie
 on:
   pull_request:
   push:
     branches: [main]
 permissions:
   contents: read
+concurrency:
+  group: website-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   flutter:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: read
     steps:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
@@ -23,3 +29,23 @@ jobs:
       - run: chromedriver --port=4444 &
       - run: flutter drive --driver=test_driver/integration_test.dart --target=integration_test/start_page_test.dart -d web-server --headless --release --no-web-resources-cdn --timeout=120
       - run: flutter build web --base-href /calculate-waveforms/ --no-web-resources-cdn
+      - uses: actions/configure-pages@v5
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      - uses: actions/upload-pages-artifact@v3
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        with:
+          path: build/web
+  publish:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: flutter
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Publiceer op GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
